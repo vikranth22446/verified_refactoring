@@ -87,16 +87,24 @@ class RefactorMagics(Magics):
             code, _ = exporter.from_notebook_node(notebook)
 
         debugprint(f"{code = }")
-        api_result = self.get_llm_call(code, args, global_vars)
-        debugprint(f"{api_result = }")
-        code += api_result
+        new_code = self.get_llm_call(code, args, global_vars)
+        debugprint(f"{new_code = }")
+        
         
         # Write to a separate file as arxiv
         now = datetime.now()
         now = now.strftime("%Y%m%d%H%M%S")
         arxiv_path = pypath.replace('.py', f'.arxiv_{now}.py')
+        diff_path = pypath.replace('.py', f'.arxiv_{now}.diff')
         with open(arxiv_path, 'w+') as file:
-            file.write(code)
+            file.write(new_code)
+
+        # Produce a diff of `code` and `new_code`
+        import difflib
+        diff = difflib.unified_diff(code.splitlines(), new_code.splitlines(), lineterm='')
+        with open(diff_path, 'w+') as file:
+            file.write('\n'.join(diff))
+
         
         # with open(path, 'w') as file:
         #     file.write(code)
