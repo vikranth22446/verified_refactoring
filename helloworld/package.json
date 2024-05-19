@@ -17,7 +17,19 @@
     "commands": [
       {
         "command": "extension.helloWorld",
-        "title": "Refactor Notebook"
+        "title": "Refactor Notebook",
+        "icon": {
+          "light": "./resources/light.svg",
+          "dark": "./resources/dark.svg"
+        }
+      },
+      {
+        "command": "extension.toggleRefactorTag",
+        "title": "Refactor Notebook",
+        "icon": {
+          "light": "./resources/light.svg",
+          "dark": "./resources/dark.svg"
+        }
       }
     ],
     "menus":{
@@ -27,6 +39,15 @@
           "group": "navigation/execute@1",
           "when": "notebookType == jupyter-notebook",
           "enablement": "notebookCellType == code"
+        }
+      ],
+      
+      "notebook/cell/title": [
+        {
+          "command": "extension.toggleRefactorTag",
+          "when": "notebookType == jupyter-notebook && notebookCellType == code",
+          "group": "inline/cell@2",
+          "category": "Refactor"
         }
       ]
     }

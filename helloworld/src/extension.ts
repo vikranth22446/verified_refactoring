@@ -156,12 +156,12 @@ export function activate(context: vscode.ExtensionContext) {
 		if (editor){
 			// Print all cells
 			var all_cells = new Array<vscode.NotebookCell>();
-			const edit = new vscode.WorkspaceEdit();
+			var edit = new vscode.WorkspaceEdit();
 			editor?.notebook.getCells().forEach(cell => {
 				all_cells.push(cell);
 				
 				var cell_text = cell.document.getText();
-				cell_text = cell_text + "# Commented by Mike\n"
+				cell_text = cell_text + "# Commented by Ginda\n"
 				console.log(cell_text);
 
 				edit.replace(
@@ -178,14 +178,12 @@ export function activate(context: vscode.ExtensionContext) {
 				all_cells_text += cell.document.getText();
 			});
 
-			// Insert new cell
-			edit.insert(
-				editor?.notebook.uri,
-				new vscode.Position(0, 0),
-				all_cells_text,
-			);
+
 			
-			vscode.workspace.applyEdit(edit);
+			vscode.workspace.applyEdit(edit).then(
+				(success) => console.log("Apply notebook metadata edit success."),
+				(reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
+			);
 
 		}
 	});
@@ -203,6 +201,51 @@ export function activate(context: vscode.ExtensionContext) {
 	// ]);
 
 	context.subscriptions.push(disposable);
+
+
+	let toggleRefactorTag = vscode.commands.registerCommand('extension.toggleRefactorTag', () => {
+		console.log('Triggered addRefactorTag!');
+		const editor = vscode.window.activeNotebookEditor;
+		if (editor){
+			// Get the current selected cell, and in the metadata field, add a tag
+			// Tweak the selection cell with the tag
+			const edit = new vscode.WorkspaceEdit();
+			const selection = editor.selection;
+
+			const lastCell = editor.notebook.cellCount;
+
+			edit.set(
+				editor.notebook.uri,
+				[
+					vscode.NotebookEdit.updateCellMetadata(
+						selection.start, {tags: ["refactor"]}
+					),
+					vscode.NotebookEdit.updateNotebookMetadata(
+						{author: "hello Mike" }
+					),
+					vscode.NotebookEdit.insertCells(
+						lastCell, [
+							new vscode.NotebookCellData(
+								vscode.NotebookCellKind.Code,
+								"print('Hello World')",
+								"python"
+							)
+						]
+					)
+				]
+			);
+			console.debug(edit);
+
+			vscode.workspace.applyEdit(edit).then(
+				(success) => console.log("Apply notebook metadata edit success."),
+				(reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
+			);
+		}
+	}
+	);
+
+	context.subscriptions.push(toggleRefactorTag);
+
 
 }
 

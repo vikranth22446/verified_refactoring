@@ -128,11 +128,11 @@ function activate(context) {
         if (editor) {
             // Print all cells
             var all_cells = new Array();
-            const edit = new vscode.WorkspaceEdit();
+            var edit = new vscode.WorkspaceEdit();
             editor?.notebook.getCells().forEach(cell => {
                 all_cells.push(cell);
                 var cell_text = cell.document.getText();
-                cell_text = cell_text + "# Commented by Mike\n";
+                cell_text = cell_text + "# Commented by Ginda\n";
                 console.log(cell_text);
                 edit.replace(cell.document.uri, new vscode.Range(0, 0, cell.document.lineCount + 1, 0), cell_text);
             });
@@ -141,9 +141,7 @@ function activate(context) {
             all_cells.forEach(cell => {
                 all_cells_text += cell.document.getText();
             });
-            // Insert new cell
-            edit.insert(editor?.notebook.uri, new vscode.Position(0, 0), all_cells_text);
-            vscode.workspace.applyEdit(edit);
+            vscode.workspace.applyEdit(edit).then((success) => console.log("Apply notebook metadata edit success."), (reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`));
         }
     });
     // add the extension.helloWorld command to the notebook toolbar
@@ -157,6 +155,27 @@ function activate(context) {
     // 	}
     // ]);
     context.subscriptions.push(disposable);
+    let toggleRefactorTag = vscode.commands.registerCommand('extension.toggleRefactorTag', () => {
+        console.log('Triggered addRefactorTag!');
+        const editor = vscode.window.activeNotebookEditor;
+        if (editor) {
+            // Get the current selected cell, and in the metadata field, add a tag
+            // Tweak the selection cell with the tag
+            const edit = new vscode.WorkspaceEdit();
+            const selection = editor.selection;
+            const lastCell = editor.notebook.cellCount;
+            edit.set(editor.notebook.uri, [
+                vscode.NotebookEdit.updateCellMetadata(selection.start, { tags: ["refactor"] }),
+                vscode.NotebookEdit.updateNotebookMetadata({ author: "hello Mike" }),
+                vscode.NotebookEdit.insertCells(lastCell, [
+                    new vscode.NotebookCellData(vscode.NotebookCellKind.Code, "print('Hello World')", "python")
+                ])
+            ]);
+            console.debug(edit);
+            vscode.workspace.applyEdit(edit).then((success) => console.log("Apply notebook metadata edit success."), (reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`));
+        }
+    });
+    context.subscriptions.push(toggleRefactorTag);
 }
 exports.activate = activate;
 // This method is called when your extension is deactivated
