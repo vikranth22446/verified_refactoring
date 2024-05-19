@@ -201,14 +201,15 @@ export function activate(context: vscode.ExtensionContext) {
 		const cell = cells[0];
 		console.debug(cell);
 
+		// Get the current metadata and add the tag
 		var metadata = JSON.parse(JSON.stringify({}));
 		metadata.custom = metadata.custom || {};
 		metadata.custom.metadata = metadata.custom.metadata || {};
-		metadata.custom.metadata.tags = ["refactor"];
-
 		metadata.metadata = metadata.metadata || {};
+		metadata.custom.metadata.tags = ["refactor"];
 		metadata.metadata.tags = ["refactor"];
 
+		// Update the metadata
 		const nbEdit = vscode.NotebookEdit.updateCellMetadata(cell.index, metadata);
 		edit.set(cell.notebook.uri, [nbEdit]);
 		vscode.workspace.applyEdit(edit).then(
