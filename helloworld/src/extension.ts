@@ -223,15 +223,15 @@ export function activate(context: vscode.ExtensionContext) {
 					vscode.NotebookEdit.updateNotebookMetadata(
 						{author: "hello Mike" }
 					),
-					vscode.NotebookEdit.insertCells(
-						lastCell, [
-							new vscode.NotebookCellData(
-								vscode.NotebookCellKind.Code,
-								"print('Hello World')",
-								"python"
-							)
-						]
-					)
+					// vscode.NotebookEdit.insertCells(
+					// 	lastCell, [
+					// 		new vscode.NotebookCellData(
+					// 			vscode.NotebookCellKind.Code,
+					// 			"print('Hello World')",
+					// 			"python"
+					// 		)
+					// 	]
+					// )
 				]
 			);
 			console.debug(edit);

@@ -167,9 +167,15 @@ function activate(context) {
             edit.set(editor.notebook.uri, [
                 vscode.NotebookEdit.updateCellMetadata(selection.start, { tags: ["refactor"] }),
                 vscode.NotebookEdit.updateNotebookMetadata({ author: "hello Mike" }),
-                vscode.NotebookEdit.insertCells(lastCell, [
-                    new vscode.NotebookCellData(vscode.NotebookCellKind.Code, "print('Hello World')", "python")
-                ])
+                // vscode.NotebookEdit.insertCells(
+                // 	lastCell, [
+                // 		new vscode.NotebookCellData(
+                // 			vscode.NotebookCellKind.Code,
+                // 			"print('Hello World')",
+                // 			"python"
+                // 		)
+                // 	]
+                // )
             ]);
             console.debug(edit);
             vscode.workspace.applyEdit(edit).then((success) => console.log("Apply notebook metadata edit success."), (reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`));
