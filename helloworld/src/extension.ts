@@ -126,28 +126,6 @@ export class SampleKernel {
 
 export function activate(context: vscode.ExtensionContext) {
 
-	console.log("Mike extension activated");
-	context.subscriptions.push(
-		vscode.workspace.registerNotebookSerializer(
-		  'test-notebook-renderer', 
-		  new SampleContentSerializer(), 
-		  { transientOutputs: true }
-		),
-		new SampleKernel()
-	);
-
-	// on open notebook
-	vscode.workspace.onDidOpenNotebookDocument((e) => {
-		console.log("onDidOpenNotebookDocument");
-		console.log(e);
-	});
-
-	// onDidSaveNotebookDocument
-	vscode.workspace.onDidSaveNotebookDocument((e) => {
-		console.log("onDidSaveNotebookDocument");
-		console.log(e);
-	});
-
 	let disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
 
 		console.log('Triggered hello world!');
@@ -177,8 +155,6 @@ export function activate(context: vscode.ExtensionContext) {
 			all_cells.forEach(cell => {
 				all_cells_text += cell.document.getText();
 			});
-
-
 			
 			vscode.workspace.applyEdit(edit).then(
 				(success) => console.log("Apply notebook metadata edit success."),
@@ -203,49 +179,51 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 
 
+	// Exmaple code to update cell tags... 
+	// 	 https://github.com/microsoft/vscode-jupyter-cell-tags/blob/main/src/helper.ts#L12
+	//   	export async function updateCellTags(cell: vscode.NotebookCell, tags: string[]);
+	//   But maybe not.
+
 	let toggleRefactorTag = vscode.commands.registerCommand('extension.toggleRefactorTag', () => {
 		console.log('Triggered addRefactorTag!');
 		const editor = vscode.window.activeNotebookEditor;
-		if (editor){
-			// Get the current selected cell, and in the metadata field, add a tag
-			// Tweak the selection cell with the tag
-			const edit = new vscode.WorkspaceEdit();
-			const selection = editor.selection;
 
-			const lastCell = editor.notebook.cellCount;
-
-			edit.set(
-				editor.notebook.uri,
-				[
-					vscode.NotebookEdit.updateCellMetadata(
-						selection.start, {tags: ["refactor"]}
-					),
-					vscode.NotebookEdit.updateNotebookMetadata(
-						{author: "hello Mike" }
-					),
-					// vscode.NotebookEdit.insertCells(
-					// 	lastCell, [
-					// 		new vscode.NotebookCellData(
-					// 			vscode.NotebookCellKind.Code,
-					// 			"print('Hello World')",
-					// 			"python"
-					// 		)
-					// 	]
-					// )
-				]
-			);
-			console.debug(edit);
-
-			vscode.workspace.applyEdit(edit).then(
-				(success) => console.log("Apply notebook metadata edit success."),
-				(reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
-			);
+		// https://github.com/microsoft/vscode/issues/190160
+		if (!editor){
+			return;
 		}
-	}
-	);
+		// Get the current selected cell, and in the metadata field, add a tag
+		// Tweak the selection cell with the tag
+		const edit = new vscode.WorkspaceEdit();
+		const currentNotebook = editor?.notebook;
+		const selection = editor.selection;
+		const cells = currentNotebook?.getCells(selection);
+		const cell = cells[0];
+		console.debug(cell);
+
+		var metadata = JSON.parse(JSON.stringify({}));
+		metadata.custom = metadata.custom || {};
+		metadata.custom.metadata = metadata.custom.metadata || {};
+		metadata.custom.metadata.tags = ["refactor"];
+
+		metadata.metadata = metadata.metadata || {};
+		metadata.metadata.tags = ["refactor"];
+
+		const nbEdit = vscode.NotebookEdit.updateCellMetadata(cell.index, metadata);
+		edit.set(cell.notebook.uri, [nbEdit]);
+		vscode.workspace.applyEdit(edit).then(
+			(success) => console.log("Apply notebook metadata edit success."),
+			(reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
+		).then(
+			// Save notebook upon success
+			() => {
+				console.log("Save notebook");
+				editor.notebook.save();
+			}
+		)
+	});
 
 	context.subscriptions.push(toggleRefactorTag);
-
 
 }
 
