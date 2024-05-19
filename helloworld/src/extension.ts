@@ -164,31 +164,15 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// add the extension.helloWorld command to the notebook toolbar
-
-	// vscode.commands.executeCommand('setContext', 'notebookToolbarButtons', [
-	// 	{
-	// 		id: 'extension.helloWorld',
-	// 		title: 'Hello World',
-	// 		icon: 'codicon-debug-stackframe-dot',
-	// 		tooltip: 'Hello World',
-	// 		// when: 'notebookEditorFocused && !inputFocused'
-	// 	}
-	// ]);
-
 	context.subscriptions.push(disposable);
 
 
-	// Exmaple code to update cell tags... 
-	// 	 https://github.com/microsoft/vscode-jupyter-cell-tags/blob/main/src/helper.ts#L12
-	//   	export async function updateCellTags(cell: vscode.NotebookCell, tags: string[]);
-	//   But maybe not.
-
 	let toggleRefactorTag = vscode.commands.registerCommand('extension.toggleRefactorTag', () => {
-		console.log('Triggered addRefactorTag!');
-		const editor = vscode.window.activeNotebookEditor;
+		// Exmaple code to update cell tags... 
+		// 	 https://github.com/microsoft/vscode-jupyter-cell-tags/blob/main/src/helper.ts#L12
 
-		// https://github.com/microsoft/vscode/issues/190160
+		console.debug('Triggered addRefactorTag!');
+		const editor = vscode.window.activeNotebookEditor;
 		if (!editor){
 			return;
 		}
@@ -201,18 +185,30 @@ export function activate(context: vscode.ExtensionContext) {
 		const cell = cells[0];
 		console.debug(cell);
 
-		// Get the current metadata and add the tag
+		// Get the current metadata and add / remove the tag
 		var metadata = JSON.parse(JSON.stringify(
 			cell.metadata
 		));
 		console.debug(metadata);
-		metadata.custom = metadata.custom || {};
-		metadata.custom.metadata = metadata.custom.metadata || {};
 		metadata.metadata = metadata.metadata || {};
-		metadata.custom.metadata.tags = metadata.custom.metadata.tags || [];
 		metadata.metadata.tags = metadata.metadata.tags || [];
-		metadata.custom.metadata.tags.indexOf("refactor") >= 0 ? metadata.custom.metadata.tags.pop("refactor") : metadata.custom.metadata.tags.push("refactor");
-		metadata.metadata.tags.indexOf("refactor") >= 0 ? metadata.metadata.tags.pop("refactor") : metadata.metadata.tags.push("refactor");
+		
+		// Toggle the refactor tags
+		// // Old version of vscode may need to use the metadata.custom field to modify metadata.
+		// metadata.custom = metadata.custom || {};
+		// metadata.custom.metadata = metadata.custom.metadata || {};
+		// metadata.custom.metadata.tags = metadata.custom.metadata.tags || [];
+		// if (metadata.custom.metadata.tags.indexOf("refactor") >= 0){
+		// 	metadata.custom.metadata.tags.pop("refactor");
+		// } else{
+		// 	metadata.custom.metadata.tags.push("refactor");
+		// }
+
+		if (metadata.metadata.tags.indexOf("refactor") >= 0) {
+			metadata.metadata.tags.pop("refactor") 
+		}else{
+			metadata.metadata.tags.push("refactor");
+		}
 
 		// Update the metadata
 		const nbEdit = vscode.NotebookEdit.updateCellMetadata(cell.index, metadata);
