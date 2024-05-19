@@ -16,7 +16,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "extension.helloWorld",
+        "command": "extension.refactorNotebook",
         "title": "Refactor Notebook",
         "icon": {
           "light": "./resources/light.svg",
@@ -35,7 +35,7 @@
     "menus":{
       "notebook/toolbar": [
         {
-          "command": "extension.helloWorld",
+          "command": "extension.refactorNotebook",
           "group": "navigation/execute@1",
           "when": "notebookType == jupyter-notebook",
           "enablement": "notebookCellType == code"
