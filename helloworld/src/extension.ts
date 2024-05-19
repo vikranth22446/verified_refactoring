@@ -2,7 +2,16 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import {TextDecoder, TextEncoder} from 'util';
+import axios from 'axios';
 
+async function refactorCode(code: string): Promise<string> {
+    return axios.post('http://127.0.0.1:5000/refactor', { code })
+        .then(response => response.data.refactored_code)
+        .catch(error => {
+            console.error('Error during the HTTP request', error);
+            throw new Error('Failed to refactor code');
+        });
+}
 
 export function activate(context: vscode.ExtensionContext) {
     console.debug(context);
@@ -24,11 +33,11 @@ export function activate(context: vscode.ExtensionContext) {
             cell_text = cell_text + "\n# Commented by Ginda";
             console.log(cell_text);
 
-            edit.replace(
-                cell.document.uri,
-                new vscode.Range(0, 0, cell.document.lineCount + 1, 0),
-                cell_text
-            );
+            // edit.replace(
+            //     cell.document.uri,
+            //     new vscode.Range(0, 0, cell.document.lineCount + 1, 0),
+            //     cell_text
+            // );
         });
 
 
@@ -42,6 +51,26 @@ export function activate(context: vscode.ExtensionContext) {
             (success) => console.log("Apply notebook metadata edit success."),
             (reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
         );
+        
+        refactorCode(all_cells_text)
+            .then(refactored_code => {
+                console.log(refactored_code);
+
+                // Insert new cell with the refactored code
+                const newCell = new vscode.NotebookCellData(
+                    vscode.NotebookCellKind.Code,
+                    refactored_code,
+                    'javascript'
+                );
+                // Create a notebook edit to insert the new cell
+                const notebookEdits = [vscode.NotebookEdit.insertCells(editor.notebook.cellCount, [newCell])];
+                const edit = new vscode.WorkspaceEdit();
+                edit.set(editor.notebook.uri, notebookEdits);
+                return vscode.workspace.applyEdit(edit);
+            })
+            .catch(error => {
+                vscode.window.showErrorMessage('Failed to refactor code');
+            });
 
 
     });
@@ -93,7 +122,10 @@ export function activate(context: vscode.ExtensionContext) {
                 console.log("Save notebook");
                 editor.notebook.save();
             }
-        )
+        );
+        
+
+
     });
 
     context.subscriptions.push(toggleRefactorTag);
