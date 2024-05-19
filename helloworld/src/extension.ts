@@ -155,7 +155,6 @@ export function activate(context: vscode.ExtensionContext) {
 		console.log(editor);
 		if (editor){
 			// Print all cells
-			
 			var all_cells = new Array<vscode.NotebookCell>();
 			const edit = new vscode.WorkspaceEdit();
 			editor?.notebook.getCells().forEach(cell => {
@@ -169,7 +168,7 @@ export function activate(context: vscode.ExtensionContext) {
 					cell.document.uri,
 					new vscode.Range(0, 0, cell.document.lineCount + 1, 0),
 					cell_text
-				);
+				); 
 			});
 			
 			
