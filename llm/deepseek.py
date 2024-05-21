@@ -27,164 +27,131 @@ def setup(api_file=None) -> 'OpenAI.Client':
 
 
 def get_system_prompt():
-    example = (
-        """Input: <code lang="python">
-        # %%
-        import pandas as pd
-        
-        # %%
-        # Config the pandas dataframe to show in a specific format
-        
-        pd.set_option('display.max_columns', 10)
-        
-        # %% [markdown]
-        # Read the dataframe
-        
-        # %%
-        df = pd.read_csv("data.csv")
-        
-        # %%
+    example1 = """Input: <code lang="python">
+    import pandas as pd
+
+    # Config the pandas dataframe to show in a specific format
+    pd.set_option('display.max_columns', 10)
+
+    # Read the dataframe
+    df = pd.read_csv("data.csv")
+    df2 = df[['b', 'a']]
+    df3 = df2.groupby('b').mean()
+    df3
+
+    df3.plot()
+    </code>
+    <var>
+    df3, and the plots it generates
+    </var>
+
+    Output:
+    <myrefactoredcode>
+    import pandas as pd
+    pd.set_option('display.max_columns', 10)
+
+    def compute_df3(file_path):
+        df = pd.read_csv(file_path)
         df2 = df[['b', 'a']]
-        
-        # %%
-        df3 = df2.groupby('b').mean()
-        
-        # %%
-        df3
-        
-        # %%
-        df3.plot()
-        </code>
-        <var>
-        df3, and the plots it generates
-        </var>
-        
-        Output:
-        <myrefactoredcode>
-        # %%
-        import pandas as pd
-        
-        # %%
-        # Config the pandas dataframe to show in a specific format
-        
-        pd.set_option('display.max_columns', 10)
-        
-        # %% [markdown]
-        # Read the dataframe
-        
-        # %%
-        df = pd.read_csv("data.csv")
-        
-        # %%
-        df3 = df2.groupby('b').mean()
-        
-        # %%
-        df3
-        
-        # %%
-        df3.plot()
-        </myrefactoredcode>
-        """
-    )
+        new_df = df2.groupby('b').mean()
+        return new_df
+
+    def plot_df3(df):
+        df.plot()  # (copilot[stateful])
+
+    def test_compute_df3():
+        test_df = pd.DataFrame({'b': [1, 1, 2, 2], 'a': [1, 2, 3, 4]})
+        expected_df = pd.DataFrame({'a': [1.5, 3.5]}, index=[1, 2])
+        result = compute_df3(test_df)
+        pd.testing.assert_frame_equal(result, expected_df)
+
+    df3 = compute_df3("data.csv")
+    plot_df3(df3)
+    test_compute_df3()
+    </myrefactoredcode>
+    """
+
+    example2 = """Input: <code lang="python">
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    # Load dataset
+    df = pd.read_csv('data.csv')
+
+    # Clean data
+    df.dropna(inplace=True)
+
+    # Feature engineering
+    df['new_feature'] = df['feature1'] * df['feature2']
+
+    # Aggregate data
+    grouped_df = df.groupby('category').agg({'new_feature': 'sum', 'feature1': 'mean'})
+
+    # Plot results
+    plt.figure(figsize=(10,6))
+    grouped_df['new_feature'].plot(kind='bar')
+    plt.title('Sum of New Feature by Category')
+    plt.show()
+    </code>
+    <var>
+    grouped_df, new_feature plot
+    </var>
+
+    Output:
+    <myrefactoredcode>
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    def clean_and_aggregate_data(file_path):
+        df = pd.read_csv(file_path)
+        df.dropna(inplace=True)  # (copilot[stateful])
+        df['new_feature'] = df['feature1'] * df['feature2']
+        grouped_df = df.groupby('category').agg({'new_feature': 'sum', 'feature1': 'mean'})
+        return grouped_df
+
+    def plot_new_feature(grouped_df):
+        plt.figure(figsize=(10,6))
+        grouped_df['new_feature'].plot(kind='bar')
+        plt.title('Sum of New Feature by Category')
+        plt.show()  # (copilot[stateful])
+
+    def test_clean_and_aggregate_data():
+        test_df = pd.DataFrame({
+            'category': ['A', 'A', 'B', 'B'],
+            'feature1': [1, 2, 3, 4],
+            'feature2': [2, 3, 4, 5]
+        })
+        expected_grouped_df = pd.DataFrame({
+            'new_feature': [8, 32],
+            'feature1': [1.5, 3.5]
+        }, index=['A', 'B'])
+        result = clean_and_aggregate_data(test_df)
+        pd.testing.assert_frame_equal(result, expected_grouped_df)
+
+    grouped_df = clean_and_aggregate_data('data.csv')
+    plot_new_feature(grouped_df)
+    test_clean_and_aggregate_data()
+    </myrefactoredcode>
+    """
+
     system_prompt = (
         "You are a powerful software developer assistant. "
-        "Your job is to refactor a jupyter notebook given to you."
-        "You will receive a jupyter notebook in text format, each cell "
-        "separated by a line started with `# %%` or `#%%` or `In [n]:` (where n is a number, or blank). "
-        "You will also receive the important variables that needed to be refactored. "  # variables to refactor
-        "Task is described in detail as below: "
-        "(*) The intput notebook will be wrapped by <code></code> tag, and "
-        "the target variables and symbols will be wrapped by <var></var> tag, "
-        "separated using comma. "
-        "(*) Refactor the jupyter notebook to a more concise version. "
-        "Keeping the original cell structure as much as possible. "
-        "Only keep the necessary code to generate the variables or statements specified in <var></var> tag."
-        "(*) Possibly prune other parts of the code that are not necessary. "
-        "Be careful of potential side effects and stateful operations. "
-        "You should add comment starting with `# (copilot[stateful])` on top of a stateful statement "
-        "that you think is important to not remove. "
-        "(*) Your generated code should start with <myrefactoredcode> and end with </myrefactoredcode> tag. "
-        "Example: " + example
+        "Your task is to refactor a Jupyter notebook provided in text format. "
+        "Important variables that need to be refactored will be highlighted. "
+        "Follow the instructions below: "
+        "1. The input notebook will be enclosed in <code></code> tags, and "
+        "the variables or symbols to be refactored will be enclosed in <var></var> tags, separated by commas. "
+        "2. Refactor the notebook code to be more concise, retaining the original cell structure as much as possible. "
+        "3. Only include code necessary to generate the variables or statements specified in the <var></var> tags. "
+        "4. Remove unnecessary parts of the code, being cautious of potential side effects and stateful operations. "
+        "   Add a comment starting with `// (copilot[stateful])` above stateful statements that should not be removed. "
+        "5. Your refactored code should be wrapped in <myrefactoredcode></myrefactoredcode> tags. "
+        "6. Where possible, refactor the code into functions using Python syntax only. "
+        "7. Ensure all relevant variables are returned from the functions. "
+        "8. Provide a sample Python test case to verify the refactored code against the original. It is of high importance that this code will have test case. Don't forget"
+        "\nExamples: " + example1 + example2
     )
     return system_prompt
-
-
-def get_user_example() -> str:
-    return """
-<code lang="python">
-# %% [markdown]
-# # Visualize a dataset
-#
-# Just want to visualize the dataset. Simple!
-
-# %%
-# ! pip install ipynb-path
-
-# %%
-import pandas as pd
-
-# %%
-# Config the pandas dataframe to show in a specific format
-
-pd.set_option('display.max_columns', 10)
-
-
-# %% [markdown]
-# Read the dataframe
-
-# %%
-df = pd.read_csv("data.csv")
-
-# %%
-df = df[df['a'] > 0]
-df = df[df['b'] < 10]
-
-# %%
-df.describe()
-
-# %%
-df.head()
-
-# %%
-df2 = df[['b', 'a']]
-
-# %%
-df3 = df.groupby('b').mean()
-
-# %%
-df3
-
-# %%
-df3.plot()
-
-# %%
-df3.plot(kind='bar')
-
-# %%
-from pathlib import Path
-# TODO: Fix the path
-__file__ = Path(".").absolute() / 'main.py'
-__file__
-
-# %%
-# %load_ext refactor_extension
-# %reload_ext refactor_extension
-# %refactor_init $__file__
-# %refactor --option  df3
-
-
-
-# %%
-
-# %%
-
-</code>
-<var>
-df3, and the plots it generates
-</var>
-"""
-    pass
-
 
 def constrct_raw_inst_user_prompt(code, vars_to_keep):
     system_prompt = get_system_prompt()
