@@ -13,16 +13,54 @@ async function refactorCode(code: string): Promise<string> {
         });
 }
 
+function processNotebookCells(editor: any) {
+    // Function to check if a cell has the refactor tag
+    function hasRefactorTag(cell: any) {
+        const metadata = cell.metadata || {};
+        const tags = metadata.tags || [];
+        return tags.indexOf("refactor") >= 0;
+    }
+
+    // Get all cells
+    const allCells = editor?.notebook.getCells();
+
+    // Check if any cell has the refactor tag
+    const anyRefactorTag = allCells.some((cell: any) => hasRefactorTag(cell));
+
+    // Initialize all_cells and all_cells_text
+    let all_cells = new Array<vscode.NotebookCell>();
+    let all_cells_text = String();
+    // Process cells based on the presence of the refactor tag
+    if (!anyRefactorTag) {
+        // If no cells have the refactor tag, process all cells
+        allCells.forEach((cell: vscode.NotebookCell) => {
+            all_cells.push(cell);
+            var cell_text = cell.document.getText();
+            all_cells_text += cell_text;
+        });
+    } else {
+        // If any cells have the refactor tag, only process cells with the refactor tag
+        allCells.filter((cell: any) => hasRefactorTag(cell)).forEach((cell: vscode.NotebookCell) => {
+            all_cells.push(cell);
+            var cell_text = cell.document.getText();
+            all_cells_text += cell_text;
+        });
+    }
+
+    // Now `all_cells_text` contains the concatenated text based on the presence of the refactor tag
+    console.log(all_cells_text);
+    return all_cells_text;
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.debug(context);
 
     let refactorNotebook = vscode.commands.registerCommand('extension.refactorNotebook', () => {
-
-        console.log('Triggered hello world!');
         const editor = vscode.window.activeNotebookEditor;
         if (!editor) {
             return;
         }
+        vscode.window.showInformationMessage('Refactoring the active notebook...');
         // Print all cells
         var all_cells = new Array<vscode.NotebookCell>();
         var edit = new vscode.WorkspaceEdit();
@@ -32,12 +70,6 @@ export function activate(context: vscode.ExtensionContext) {
             var cell_text = cell.document.getText();
             cell_text = cell_text + "\n# Commented by Ginda";
             console.log(cell_text);
-
-            // edit.replace(
-            //     cell.document.uri,
-            //     new vscode.Range(0, 0, cell.document.lineCount + 1, 0),
-            //     cell_text
-            // );
         });
 
 
@@ -46,21 +78,22 @@ export function activate(context: vscode.ExtensionContext) {
         all_cells.forEach(cell => {
             all_cells_text += cell.document.getText();
         });
+        all_cells_text = processNotebookCells(editor);
 
         vscode.workspace.applyEdit(edit).then(
             (success) => console.log("Apply notebook metadata edit success."),
             (reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
         );
-        
+        vscode.window.showInformationMessage('Quering the LLM for updated code...');
         refactorCode(all_cells_text)
             .then(refactored_code => {
                 console.log(refactored_code);
-
+                vscode.window.showInformationMessage('Updating the jupyter cells');
                 // Insert new cell with the refactored code
                 const newCell = new vscode.NotebookCellData(
                     vscode.NotebookCellKind.Code,
                     refactored_code,
-                    'javascript'
+                    'python'
                 );
                 // Create a notebook edit to insert the new cell
                 const notebookEdits = [vscode.NotebookEdit.insertCells(editor.notebook.cellCount, [newCell])];
