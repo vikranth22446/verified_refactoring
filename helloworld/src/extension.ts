@@ -44,7 +44,7 @@ function processNotebookCells(editor: any) {
 
     // If any cells have the refactor tag,
     // push the process cells with the refactor scope
-    // TODO(future): Syntactically analyze the code and extract vars / exprs to refactor
+    // TODO(future): Syntactically analyze the code and extract vars / expressions to refactor
     allCells.filter((cell: any) => hasRefactorTag(cell)).forEach((cell: vscode.NotebookCell) => {
         refactor_cells.push(cell);
         const cell_text = getCellText(cell);
@@ -76,7 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
             (success) => console.log("Apply notebook metadata edit success."),
             (reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
         );
-        vscode.window.showInformationMessage('Quering the LLM for updated code...');
+        vscode.window.showInformationMessage('Querying the LLM for updated code...');
         refactorCode(all_cells_text, refactor_cells_text)
             .then(refactored_code => {
                 console.log(refactored_code);
@@ -101,7 +101,6 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(refactorNotebook);
-
 
     let toggleRefactorTag = vscode.commands.registerCommand('extension.toggleRefactorTag', () => {
         // Example code to update cell tags:
@@ -153,7 +152,6 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(toggleRefactorTag);
-
 }
 
 

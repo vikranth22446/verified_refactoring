@@ -13,7 +13,10 @@ app = Flask(__name__)
 def refactor_code():
     data = request.json
     code = data.get('code')
-    vars_to_keep = data.get('vars', '<empty/>') # or "vars_to_keep"?
+    vars_to_keep = data.get('vars') # or "vars_to_keep"?
+    if not vars_to_keep:
+        vars_to_keep = '<auto />'
+    print(f"{vars_to_keep = }")
     api_file = data.get('api_file', None)
     # vars_to_keep = "<empty>"
     if not code or not vars_to_keep:
