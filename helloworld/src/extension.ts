@@ -35,7 +35,7 @@ function processNotebookCells(editor: any) {
         // If no cells have the refactor tag, process all cells
         allCells.forEach((cell: vscode.NotebookCell) => {
             all_cells.push(cell);
-            var cell_text = cell.document.getText();
+            var cell_text = cell.document.getText() + "\n";
             all_cells_text += cell_text;
         });
     } else {
