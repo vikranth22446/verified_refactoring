@@ -16,7 +16,7 @@ async function refactorCode(code: string): Promise<string> {
 function processNotebookCells(editor: any) {
     // Function to check if a cell has the refactor tag
     function hasRefactorTag(cell: any) {
-        const metadata = cell.metadata || {};
+        const metadata = cell.metadata.metadata || {};
         const tags = metadata.tags || [];
         return tags.indexOf("refactor") >= 0;
     }
