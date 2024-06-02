@@ -42,7 +42,7 @@ def get_system_prompt():
     df3.plot()
     </code>
     <var>
-    df3, and the plots it generates
+    df3.plot()
     </var>
 
     Output:
@@ -60,8 +60,9 @@ def get_system_prompt():
         df.plot()  # (copilot[stateful])
 
     def test_compute_df3():
-        test_df = pd.DataFrame({'b': [1, 1, 2, 2], 'a': [1, 2, 3, 4]})
-        expected_df = pd.DataFrame({'a': [1.5, 3.5]}, index=[1, 2])
+         # Try to get from the global state to verify the variable
+        expected_df = globals()["df3"]
+        # Obtain the expected result
         result = compute_df3(test_df)
         pd.testing.assert_frame_equal(result, expected_df)
 
@@ -94,7 +95,7 @@ def get_system_prompt():
     plt.show()
     </code>
     <var>
-    grouped_df, new_feature plot
+    grouped_df['new_feature'].plot(kind='bar')
     </var>
 
     Output:
@@ -116,16 +117,8 @@ def get_system_prompt():
         plt.show()  # (copilot[stateful])
 
     def test_clean_and_aggregate_data():
-        test_df = pd.DataFrame({
-            'category': ['A', 'A', 'B', 'B'],
-            'feature1': [1, 2, 3, 4],
-            'feature2': [2, 3, 4, 5]
-        })
-        expected_grouped_df = pd.DataFrame({
-            'new_feature': [8, 32],
-            'feature1': [1.5, 3.5]
-        }, index=['A', 'B'])
-        result = clean_and_aggregate_data(test_df)
+        expected_df = globals()["grouped_df"]
+        result = clean_and_aggregate_data('data.csv')
         pd.testing.assert_frame_equal(result, expected_grouped_df)
 
     grouped_df = clean_and_aggregate_data('data.csv')
@@ -140,7 +133,7 @@ def get_system_prompt():
         "Important variables that need to be refactored will be highlighted. "
         "Follow the instructions below: "
         "1. The input notebook will be enclosed in <code></code> tags, and "
-        "the variables or symbols to be refactored will be enclosed in <var></var> tags, separated by commas. "
+        "the cells and expressions to retain will be enclosed in <var></var> tags. "
         "2. Refactor the notebook code to be more concise, retaining the original cell structure as much as possible. "
         "3. Only include code necessary to generate the variables or statements specified in the <var></var> tags. "
         "4. Remove unnecessary parts of the code, being cautious of potential side effects and stateful operations. "
@@ -148,10 +141,12 @@ def get_system_prompt():
         "5. Your refactored code should be wrapped in <myrefactoredcode></myrefactoredcode> tags. "
         "6. Where possible, refactor the code into functions using Python syntax only. "
         "7. Ensure all relevant variables are returned from the functions. "
-        "8. Provide a sample Python test case to verify the refactored code against the original. It is of high importance that this code will have test case. Don't forget"
+        "8. Provide a sample Python test case to verify the refactored code against the original. "
+        "It is of high importance that this code will have test case. Don't forget. "
         "\nExamples: " + example1 + example2
     )
     return system_prompt
+
 
 def constrct_raw_inst_user_prompt(code, vars_to_keep):
     system_prompt = get_system_prompt()
@@ -268,6 +263,7 @@ def invoke_llm(client, code: str, vars_to_kep: str) -> str:
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": content}
     ]
+    print(messages)
 
     response = client.chat.completions.create(
         model="deepseek-chat",

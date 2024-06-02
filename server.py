@@ -13,12 +13,15 @@ app = Flask(__name__)
 def refactor_code():
     data = request.json
     code = data.get('code')
-    vars_to_keep = data.get('vars_to_keep')
+    vars_to_keep = data.get('vars', '<empty/>') # or "vars_to_keep"?
     api_file = data.get('api_file', None)
-    vars_to_keep = "<empty>"
+    # vars_to_keep = "<empty>"
     if not code or not vars_to_keep:
         return jsonify({"error": "code and vars_to_keep are required"}), 400
     
+    print(f"code: {code}")
+    print(f"vars_to_keep: {vars_to_keep}")
+
     deepseek = DeepSeekLLM(api_file=api_file)
     try:
         output = deepseek.invoke_llm(code=code, vars_to_keep=vars_to_keep)
