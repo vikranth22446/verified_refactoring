@@ -271,8 +271,8 @@ def invoke_llm(client, code: str, vars_to_kep: str) -> str:
         messages=messages,
         max_tokens=2048,
         # max_tokens=64,  # testing
-        temperature=0.3,
-        # temperature=0,
+        # temperature=0.3,
+        temperature=0,
         stream=False,
     )
 
