@@ -20,7 +20,10 @@ function hasRefactorTag(cell: any) {
 }
 
 function getCellText(cell: any) {
-    return cell.document.getText() + "\n";
+    // Get cell index
+    console.log(cell.index);
+    const cell_index = "# In[" + cell.index + "]:\n";
+    return cell_index + cell.document.getText() + "\n";
 }
 
 function processNotebookCells(editor: any) {

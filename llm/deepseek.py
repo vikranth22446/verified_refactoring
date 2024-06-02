@@ -28,20 +28,25 @@ def setup(api_file=None) -> 'OpenAI.Client':
 
 def get_system_prompt():
     example1 = """Input: <code lang="python">
+    # In[1]:
     import pandas as pd
-
+    
+    # In[2]:
     # Config the pandas dataframe to show in a specific format
     pd.set_option('display.max_columns', 10)
 
+    # In[3]:
     # Read the dataframe
     df = pd.read_csv("data.csv")
     df2 = df[['b', 'a']]
     df3 = df2.groupby('b').mean()
     df3
-
+    
+    # In[4]:
     df3.plot()
     </code>
     <var>
+    # In[4]:
     df3.plot()
     </var>
 
@@ -73,21 +78,27 @@ def get_system_prompt():
     """
 
     example2 = """Input: <code lang="python">
+    # In[1]:
     import pandas as pd
     import matplotlib.pyplot as plt
-
+    
+    # In[2]:
     # Load dataset
     df = pd.read_csv('data.csv')
 
+    # In[3]:
     # Clean data
     df.dropna(inplace=True)
-
+    
+    # In[4]:
     # Feature engineering
     df['new_feature'] = df['feature1'] * df['feature2']
 
+    # In[5]:
     # Aggregate data
     grouped_df = df.groupby('category').agg({'new_feature': 'sum', 'feature1': 'mean'})
-
+    
+    # In[6]:
     # Plot results
     plt.figure(figsize=(10,6))
     grouped_df['new_feature'].plot(kind='bar')
@@ -95,7 +106,12 @@ def get_system_prompt():
     plt.show()
     </code>
     <var>
+    # In[6]:
+    # Plot results
+    plt.figure(figsize=(10,6))
     grouped_df['new_feature'].plot(kind='bar')
+    plt.title('Sum of New Feature by Category')
+    plt.show()
     </var>
 
     Output:
@@ -140,6 +156,7 @@ def get_system_prompt():
         "4. Remove unnecessary parts of the code, being cautious of potential side effects and stateful operations. "
         "   Add a comment starting with `// (copilot[stateful])` above stateful statements that should not be removed. "
         "5. Your refactored code should be wrapped in <myrefactoredcode></myrefactoredcode> tags. "
+        "   Do not include ipython notebook cell tags (such as `# In[1]:`) in the refactored code. "
         "6. Where possible, refactor the code into functions using Python syntax only. "
         "7. Ensure all relevant variables are returned from the functions. "
         "8. Provide a sample Python test case to verify the refactored code against the original. "
