@@ -36,11 +36,12 @@ async function refactorCodeV2(code: string, vars: string, newCell: vscode.Notebo
 
         const chunk = decoder.decode(value, { stream: true });
         refactored_code = chunk;
-        updateNotebookCellV2(refactored_code, newCell, notebookEdits, cellIndex); // Update the notebook cell with the current refactored code
+        updateNotebookCellV2(refactored_code, newCell, notebookEdits, cellIndex, "text"); // Update the notebook cell with the current refactored code
     }
+    updateNotebookCellV2(refactored_code, newCell, notebookEdits, cellIndex, "python"); // Update the notebook cell with the current refactored code
 }
 
-function updateNotebookCellV2(refactored_code: string, newCellOld: vscode.NotebookCellData, notebookEdits: vscode.NotebookEdit[], cellIndex: number): void {
+function updateNotebookCellV2(refactored_code: string, newCellOld: vscode.NotebookCellData, notebookEdits: vscode.NotebookEdit[], cellIndex: number, cellType: string): void {
     const editor = vscode.window.activeNotebookEditor;
     if (editor) {
         const edit = new vscode.WorkspaceEdit();
@@ -52,7 +53,7 @@ function updateNotebookCellV2(refactored_code: string, newCellOld: vscode.Notebo
         const newCell = new vscode.NotebookCellData(
             vscode.NotebookCellKind.Code,
             refactored_code,
-            'python'
+            cellType
         );
         // Create a notebook edit to insert the new cell
         const notebookEdits = [vscode.NotebookEdit.replaceCells(new vscode.NotebookRange(cellIndex, cellIndex + 1), [newCell])];
