@@ -157,7 +157,7 @@ def get_system_prompt():
         "   Add a comment starting with `// (copilot[stateful])` above stateful statements that should not be removed. "
         "5. Your refactored code should be wrapped in <myrefactoredcode></myrefactoredcode> tags. "
         "   Do not include ipython notebook cell tags (such as `# In[1]:`) in the refactored code. "
-        "6. Where possible, refactor the code into functions using Python syntax only. "
+        "6. Only Generate using python code only. It is vital for the survival of this project. Make sure comments are generated using python syntax only. Do not generate any markdown style or put strings like 'Test Case:' in the code."
         "7. Ensure all relevant variables are returned from the functions. "
         "8. Provide a sample Python test case to verify the refactored code against the original. "
         "It is of high importance that this code will have test case. Don't forget. "
@@ -333,13 +333,16 @@ class DeepSeekLLM(LLM):
         )
 
         refactored_code = ""
+        buffer = ""
         for chunk in response:
             if chunk.choices:
                 for choice in chunk.choices:
                     if choice.delta and choice.delta.content:
                         token = choice.delta.content
                         refactored_code += token
-                        yield refactored_code
+                        if ' ' in token or '\n' in token:
+                            yield refactored_code
+        yield refactored_code
 
 def extract_token_from_line(line: str) -> str:
     # Implement a function to extract the token from the line
