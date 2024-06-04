@@ -6,7 +6,7 @@ from pathlib import Path
 from openai import OpenAI
 
 from llm.base import LLM
-
+import requests
 
 def read_api_key(api_file: 'PathLike' = None) -> str:
     api_file = api_file or Path(__file__).parent / "deepseek.apikey"
@@ -281,7 +281,6 @@ def invoke_llm(client, code: str, vars_to_kep: str) -> str:
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": content}
     ]
-    print(messages)
 
     response = client.chat.completions.create(
         model="deepseek-chat",
@@ -315,6 +314,37 @@ class DeepSeekLLM(LLM):
 
         return invoke_llm(self.client, code, vars_to_keep)
 
+    def invoke_llm_stream(self, code: str, vars_to_keep: str):
+        system_prompt = get_system_prompt()
+
+        content = f"<code>{code}</code><var>{vars_to_keep}</var>"
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": content}
+        ]
+
+        response = self.client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages,
+            max_tokens=2048,
+            temperature=0,
+            stream=True
+        )
+
+        refactored_code = ""
+        for chunk in response:
+            if chunk.choices:
+                for choice in chunk.choices:
+                    if choice.delta and choice.delta.content:
+                        token = choice.delta.content
+                        refactored_code += token
+                        yield refactored_code
+
+def extract_token_from_line(line: str) -> str:
+    # Implement a function to extract the token from the line
+    print(line)
+    return line
 
 def parse_args(args_):
     parser = argparse.ArgumentParser(description='Deepseek Refactor Engine')

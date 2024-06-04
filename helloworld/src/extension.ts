@@ -12,6 +12,56 @@ async function refactorCode(code: string, vars: string): Promise<string> {
         });
 }
 
+
+async function refactorCodeV2(code: string, vars: string, newCell: vscode.NotebookCellData, notebookEdits: vscode.NotebookEdit[], cellIndex: number): Promise<void> {
+    const response = await fetch('http://127.0.0.1:5000/refactor_v2', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code, vars })
+    });
+
+    if (!response.body) {
+        throw new Error('Response body is empty');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let refactored_code = "";
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        refactored_code = chunk;
+        updateNotebookCellV2(refactored_code, newCell, notebookEdits, cellIndex); // Update the notebook cell with the current refactored code
+    }
+}
+
+function updateNotebookCellV2(refactored_code: string, newCellOld: vscode.NotebookCellData, notebookEdits: vscode.NotebookEdit[], cellIndex: number): void {
+    const editor = vscode.window.activeNotebookEditor;
+    if (editor) {
+        const edit = new vscode.WorkspaceEdit();
+        const cell = editor.notebook.cellAt(cellIndex);
+
+        // Update the existing cell content
+        // newCell.value = refactored_code;
+        // notebookEdits.push(vscode.NotebookEdit.updateCellMetadata(cellIndex, newCell.metadata?.metadata || {}));
+        const newCell = new vscode.NotebookCellData(
+            vscode.NotebookCellKind.Code,
+            refactored_code,
+            'python'
+        );
+        // Create a notebook edit to insert the new cell
+        const notebookEdits = [vscode.NotebookEdit.replaceCells(new vscode.NotebookRange(cellIndex, cellIndex + 1), [newCell])];
+
+        edit.set(editor.notebook.uri, notebookEdits);
+        vscode.workspace.applyEdit(edit);
+    }
+}
+
 // Function to check if a cell has the refactor tag
 function hasRefactorTag(cell: any) {
     const metadata = cell.metadata.metadata || {};
@@ -80,25 +130,34 @@ export function activate(context: vscode.ExtensionContext) {
             (reason) => console.log(`Apply notebook metadata edit failed with reason: ${reason}`)
         );
         vscode.window.showInformationMessage('Querying the LLM for updated code...');
-        refactorCode(all_cells_text, refactor_cells_text)
-            .then(refactored_code => {
-                console.log(refactored_code);
-                vscode.window.showInformationMessage('Updating the jupyter cells');
-                // Insert new cell with the refactored code
-                const newCell = new vscode.NotebookCellData(
-                    vscode.NotebookCellKind.Code,
-                    refactored_code,
-                    'python'
-                );
-                // Create a notebook edit to insert the new cell
-                const notebookEdits = [vscode.NotebookEdit.insertCells(editor.notebook.cellCount, [newCell])];
-                const edit = new vscode.WorkspaceEdit();
-                edit.set(editor.notebook.uri, notebookEdits);
-                return vscode.workspace.applyEdit(edit);
-            })
-            .catch(error => {
-                vscode.window.showErrorMessage('Failed to refactor code');
-            });
+        var refactored_code = "";
+
+        const newCell = new vscode.NotebookCellData(
+            vscode.NotebookCellKind.Code,
+            refactored_code,
+            'python'
+        );
+        // Create a notebook edit to insert the new cell
+        const notebookEdits = [vscode.NotebookEdit.insertCells(editor.notebook.cellCount, [newCell])];
+        refactorCodeV2(all_cells_text, refactor_cells_text, newCell, notebookEdits, editor.notebook.cellCount).then(() => {
+            vscode.window.showInformationMessage('Refactoring complete and notebook updated');
+        }).catch(error => {
+            vscode.window.showErrorMessage('Failed to refactor code: ' + error.message);
+        });
+
+        // refactorCode(all_cells_text, refactor_cells_text)
+        //     .then(refactored_code => {
+        //         console.log(refactored_code);
+        //         vscode.window.showInformationMessage('Updating the jupyter cells');
+        //         // Insert new cell with the refactored code
+        //         newCell.value = refactored_code;
+        //         const edit = new vscode.WorkspaceEdit();
+        //         edit.set(editor.notebook.uri, notebookEdits);
+        //         return vscode.workspace.applyEdit(edit);
+        //     })
+        //     .catch(error => {
+        //         vscode.window.showErrorMessage('Failed to refactor code');
+        //     });
 
 
     });
