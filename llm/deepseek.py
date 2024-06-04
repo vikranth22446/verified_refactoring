@@ -159,6 +159,7 @@ def get_system_prompt():
         "   Do not include ipython notebook cell tags (such as `# In[1]:`) in the refactored code. "
         "6. Only Generate using python code only. It is vital for the survival of this project. Make sure comments are generated using python syntax only. Do not generate any markdown style or put strings like 'Test Case:' in the code."
         "7. Ensure all relevant variables are returned from the functions. "
+        "Ensure all irrelevant code (especially unused pieces) to be removed from your refactored version. "
         "8. Provide a sample Python test case to verify the refactored code against the original. "
         "It is of high importance that this code will have test case. Don't forget. "
         "\nExamples: " + example1 + example2
